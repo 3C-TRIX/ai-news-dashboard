@@ -1334,21 +1334,22 @@ def run_scrape(days=3):
         return
     JOB['running'] = True
     all_articles = []
+    pool = ThreadPoolExecutor(max_workers=5)
     try:
-        with ThreadPoolExecutor(max_workers=5) as pool:
-            futures = {pool.submit(process_source, src, days): src for src in SOURCES}
-            try:
-                for future in as_completed(futures, timeout=180):
-                    src = futures[future]
-                    try:
-                        all_articles.extend(future.result(timeout=30))
-                    except Exception as e:
-                        logger.debug(f"Source {src.get('website','?')} failed: {e}")
-            except Exception as e:
-                logger.warning(f"Scrape partial timeout ({len(all_articles)} articles so far): {e}")
+        futures = {pool.submit(process_source, src, days): src for src in SOURCES}
+        try:
+            for future in as_completed(futures, timeout=180):
+                src = futures[future]
+                try:
+                    all_articles.extend(future.result(timeout=30))
+                except Exception as e:
+                    logger.debug(f"Source {src.get('website','?')} failed: {e}")
+        except Exception as e:
+            logger.warning(f"Scrape timeout: {e}, {len(all_articles)} articles collected")
     except Exception as e:
         logger.error(f"ThreadPool failed: {e}")
     finally:
+        pool.shutdown(wait=False)  # Don't block on stuck threads
         all_articles.sort(key=lambda x: x.get('date_iso', ''), reverse=True)
         CACHE['data'] = all_articles
         CACHE['timestamp'] = datetime.now()
