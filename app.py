@@ -614,7 +614,7 @@ def find_article_links_fallback(soup, base_url, max_per_source=5, days=3):
 
     confirmed = []
     try:
-        with ThreadPoolExecutor(max_workers=6) as pool:
+        with ThreadPoolExecutor(max_workers=3) as pool:
             fmap = {pool.submit(fetch_article, c['url']): c
                     for c in candidates[:max_per_source * 3]}
             for future in as_completed(fmap, timeout=50):
@@ -1335,7 +1335,7 @@ def run_scrape(days=3):
     JOB['running'] = True
     all_articles = []
     try:
-        with ThreadPoolExecutor(max_workers=15) as pool:
+        with ThreadPoolExecutor(max_workers=5) as pool:
             futures = {pool.submit(process_source, src, days): src for src in SOURCES}
             try:
                 for future in as_completed(futures, timeout=180):
