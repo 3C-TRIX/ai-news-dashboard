@@ -13,6 +13,7 @@ Then open: http://localhost:5000
 """
 
 import os
+import threading
 from flask import Flask, jsonify, render_template_string, request
 import requests as req_lib
 from bs4 import BeautifulSoup
@@ -41,6 +42,8 @@ CACHE = {
     'timestamp': None,
     'ttl_seconds': 600,
 }
+
+JOB = {'running': False}
 
 STOP_WORDS = {
     'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
@@ -1248,29 +1251,51 @@ function setStatus(msg, cls) {
   el.innerHTML = msg;
 }
 
+let _pollTimer = null;
+
 async function fetchNews(forceRefresh) {
+  if (_pollTimer) { clearTimeout(_pollTimer); _pollTimer = null; }
   $('refresh-btn').disabled = true;
   setStatus('<span class="spinner"></span>Fetching from all sources… (may take 1–2 min)', 'loading');
-  $('tbody').innerHTML = '<tr><td colspan="7" class="empty"><span class="spinner"></span>Loading…</td></tr>';
+  if (!allData.length) {
+    $('tbody').innerHTML = '<tr><td colspan="7" class="empty"><span class="spinner"></span>Loading…</td></tr>';
+  }
 
   try {
     const url = forceRefresh ? '/api/news?refresh=1' : '/api/news';
     const res = await fetch(url);
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
-    allData = data.articles || [];
 
-    const cached = data.from_cache ? ' (cached)' : '';
     const ts = data.timestamp ? new Date(data.timestamp).toLocaleTimeString() : '';
 
+    if (data.status === 'loading') {
+      setStatus('<span class="spinner"></span>Scraping all sources… will auto-refresh in 10 s', 'loading');
+      _pollTimer = setTimeout(() => fetchNews(false), 10000);
+      return;
+    }
+
+    if (data.status === 'refreshing') {
+      // Show stale data immediately, then poll for fresh
+      allData = data.articles || [];
+      populateWebsiteFilter();
+      applyFilters();
+      setStatus(`<span class="spinner"></span>Refreshing… showing ${allData.length} cached articles · ${ts}`, 'loading');
+      _pollTimer = setTimeout(() => fetchNews(false), 10000);
+      $('refresh-btn').disabled = false;
+      return;
+    }
+
+    // status === 'ready'
+    allData = data.articles || [];
     populateWebsiteFilter();
     applyFilters();
-    setStatus(`${allData.length} total articles${cached} · ${ts}`);
+    setStatus(`${allData.length} total articles · ${ts}`);
   } catch(e) {
     setStatus('Error: ' + esc(e.message), 'error');
     $('tbody').innerHTML = `<tr><td colspan="7" class="empty">Failed: ${esc(e.message)}</td></tr>`;
   } finally {
-    $('refresh-btn').disabled = false;
+    if (!_pollTimer) $('refresh-btn').disabled = false;
   }
 }
 
@@ -1293,42 +1318,61 @@ def index():
     return render_template_string(HTML_TEMPLATE)
 
 
+def run_scrape(days=3):
+    """Scrape all sources in background and update CACHE when done."""
+    if JOB['running']:
+        return
+    JOB['running'] = True
+    try:
+        all_articles = []
+        with ThreadPoolExecutor(max_workers=15) as pool:
+            futures = {pool.submit(process_source, src, days): src for src in SOURCES}
+            for future in as_completed(futures, timeout=180):
+                src = futures[future]
+                try:
+                    all_articles.extend(future.result(timeout=30))
+                except Exception as e:
+                    logger.debug(f"Source {src.get('website','?')} failed: {e}")
+        all_articles.sort(key=lambda x: x.get('date_iso', ''), reverse=True)
+        now = datetime.now()
+        CACHE['data'] = all_articles
+        CACHE['timestamp'] = now
+        logger.info(f"Scrape complete: {len(all_articles)} articles")
+    except Exception as e:
+        logger.error(f"Scrape failed: {e}")
+    finally:
+        JOB['running'] = False
+
+
 @app.route('/api/news')
 def get_news():
     force = bool(request.args.get('refresh'))
     days = int(request.args.get('days', 3))
 
+    # Serve cache if still fresh
     if not force and CACHE['data'] is not None and CACHE['timestamp']:
         age = (datetime.now() - CACHE['timestamp']).total_seconds()
         if age < CACHE['ttl_seconds']:
             return jsonify({
                 'articles': CACHE['data'],
+                'status': 'ready',
                 'from_cache': True,
                 'timestamp': CACHE['timestamp'].isoformat(),
             })
 
-    all_articles = []
-    with ThreadPoolExecutor(max_workers=15) as pool:
-        futures = {pool.submit(process_source, src, days): src for src in SOURCES}
-        for future in as_completed(futures, timeout=180):
-            src = futures[future]
-            try:
-                all_articles.extend(future.result(timeout=30))
-            except Exception as e:
-                logger.debug(f"Source {src.get('website','?')} failed: {e}")
+    # Start background scrape if not already running
+    if not JOB['running']:
+        threading.Thread(target=run_scrape, args=(days,), daemon=True).start()
 
-    # Default sort: newest first
-    all_articles.sort(key=lambda x: x.get('date_iso', ''), reverse=True)
-
-    now = datetime.now()
-    CACHE['data'] = all_articles
-    CACHE['timestamp'] = now
-
-    return jsonify({
-        'articles': all_articles,
-        'from_cache': False,
-        'timestamp': now.isoformat(),
-    })
+    # Return immediately — stale cache or loading
+    if CACHE['data'] is not None:
+        return jsonify({
+            'articles': CACHE['data'],
+            'status': 'refreshing',
+            'from_cache': True,
+            'timestamp': CACHE['timestamp'].isoformat(),
+        })
+    return jsonify({'articles': [], 'status': 'loading', 'from_cache': False, 'timestamp': ''})
 
 
 if __name__ == '__main__':
