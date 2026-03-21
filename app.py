@@ -1318,6 +1318,16 @@ def index():
     return render_template_string(HTML_TEMPLATE)
 
 
+@app.route('/health')
+def health():
+    return jsonify({
+        'status': 'ok',
+        'job_running': JOB['running'],
+        'cache_articles': len(CACHE['data']) if CACHE['data'] else 0,
+        'cache_age_seconds': int((datetime.now() - CACHE['timestamp']).total_seconds()) if CACHE['timestamp'] else None,
+    })
+
+
 def run_scrape(days=3):
     """Scrape all sources in background and update CACHE when done."""
     if JOB['running']:
