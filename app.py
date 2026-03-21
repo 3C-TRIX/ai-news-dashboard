@@ -1320,11 +1320,17 @@ def index():
 
 @app.route('/health')
 def health():
+    import resource
+    try:
+        mem_mb = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss // 1024
+    except Exception:
+        mem_mb = -1
     return jsonify({
         'status': 'ok',
         'job_running': JOB['running'],
         'cache_articles': len(CACHE['data']) if CACHE['data'] else 0,
         'cache_age_seconds': int((datetime.now() - CACHE['timestamp']).total_seconds()) if CACHE['timestamp'] else None,
+        'memory_mb': mem_mb,
     })
 
 
@@ -1386,10 +1392,6 @@ def get_news():
             'timestamp': CACHE['timestamp'].isoformat(),
         })
     return jsonify({'articles': [], 'status': 'loading', 'from_cache': False, 'timestamp': ''})
-
-
-# Kick off initial scrape on startup so first visitor doesn't wait
-threading.Thread(target=run_scrape, args=(3,), daemon=True).start()
 
 
 if __name__ == '__main__':
