@@ -1333,25 +1333,27 @@ def run_scrape(days=3):
     if JOB['running']:
         return
     JOB['running'] = True
+    all_articles = []
     try:
-        all_articles = []
         with ThreadPoolExecutor(max_workers=15) as pool:
             futures = {pool.submit(process_source, src, days): src for src in SOURCES}
-            for future in as_completed(futures, timeout=180):
-                src = futures[future]
-                try:
-                    all_articles.extend(future.result(timeout=30))
-                except Exception as e:
-                    logger.debug(f"Source {src.get('website','?')} failed: {e}")
-        all_articles.sort(key=lambda x: x.get('date_iso', ''), reverse=True)
-        now = datetime.now()
-        CACHE['data'] = all_articles
-        CACHE['timestamp'] = now
-        logger.info(f"Scrape complete: {len(all_articles)} articles")
+            try:
+                for future in as_completed(futures, timeout=180):
+                    src = futures[future]
+                    try:
+                        all_articles.extend(future.result(timeout=30))
+                    except Exception as e:
+                        logger.debug(f"Source {src.get('website','?')} failed: {e}")
+            except Exception as e:
+                logger.warning(f"Scrape partial timeout ({len(all_articles)} articles so far): {e}")
     except Exception as e:
-        logger.error(f"Scrape failed: {e}")
+        logger.error(f"ThreadPool failed: {e}")
     finally:
+        all_articles.sort(key=lambda x: x.get('date_iso', ''), reverse=True)
+        CACHE['data'] = all_articles
+        CACHE['timestamp'] = datetime.now()
         JOB['running'] = False
+        logger.info(f"Scrape done: {len(all_articles)} articles")
 
 
 @app.route('/api/news')
