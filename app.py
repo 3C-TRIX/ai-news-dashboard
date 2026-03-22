@@ -996,7 +996,7 @@ tailwind.config = {
 <aside class="hidden lg:flex flex-col h-screen w-64 fixed left-0 top-0 z-40 bg-surface-container-low py-6 px-4">
   <div class="px-2 mb-8">
     <div class="flex items-center gap-3">
-      <img src="/static/logo.png" alt="3C TRIX AI" class="w-10 h-10 rounded-full object-contain"
+      <img src="/static/logo.jpg" alt="3C TRIX AI" class="w-10 h-10 rounded-full object-contain"
         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
       <div class="w-10 h-10 rounded-xl bg-primary items-center justify-center hidden">
         <span class="material-symbols-outlined text-white">psychology</span>
@@ -1029,7 +1029,7 @@ tailwind.config = {
 <header class="fixed top-0 left-0 lg:left-64 right-0 h-16 z-50 bg-surface/90 backdrop-blur-xl border-b border-outline-variant/20">
   <div class="flex items-center justify-between h-full px-6">
     <div class="flex items-center gap-3 lg:hidden">
-      <img src="/static/logo.png" alt="3C TRIX AI" class="w-8 h-8 rounded-full object-contain"
+      <img src="/static/logo.jpg" alt="3C TRIX AI" class="w-8 h-8 rounded-full object-contain"
         onerror="this.style.display='none'">
       <span class="font-headline font-black text-primary text-lg">3C TRIX AI</span>
     </div>
