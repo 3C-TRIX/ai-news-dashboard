@@ -1384,17 +1384,21 @@ function renderTrending() {
     return;
   }
   const totalLikes = allData.reduce((s,a)=>s+getLikes(a.link),0);
-  const sorted=[...allData].sort((a,b)=>{
-    const la=getLikes(a.link), lb=getLikes(b.link);
-    if (lb!==la) return lb-la;
-    // No likes yet — fall back to featured company score then date
-    if (totalLikes===0) {
-      const fs=featuredScore(b)-featuredScore(a);
-      if (fs!==0) return fs;
-    }
-    return (b.date_iso||'')>(a.date_iso||'')?1:-1;
-  });
-  const top=sorted.slice(0,10);
+  let pool;
+  if (totalLikes === 0) {
+    // No likes yet — show only articles about featured companies, sorted by date
+    pool = allData.filter(a => featuredScore(a) > 0)
+                  .sort((a,b) => (b.date_iso||'')>(a.date_iso||'')?1:-1);
+    if (!pool.length) pool = [...allData].sort((a,b)=>(b.date_iso||'')>(a.date_iso||'')?1:-1);
+  } else {
+    // Sort by likes desc, then date
+    pool = [...allData].sort((a,b)=>{
+      const la=getLikes(a.link), lb=getLikes(b.link);
+      if (lb!==la) return lb-la;
+      return (b.date_iso||'')>(a.date_iso||'')?1:-1;
+    });
+  }
+  const top=pool.slice(0,10);
   const lead=top[0];
   const sec=top.slice(1,3);
   const grid=top.slice(3,9);
