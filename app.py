@@ -1334,7 +1334,10 @@ function render() {
       </td>
       <td class="py-5 px-5">
         <div class="text-sm font-extrabold text-primary mb-1 font-headline leading-snug">${esc(a.title)}</div>
-        ${a.summary ? `<div class="text-xs text-on-surface-variant leading-relaxed line-clamp-2">${esc(a.summary)}</div>` : ''}
+        ${a.summary ? `<div>
+          <div class="text-xs text-on-surface-variant leading-relaxed line-clamp-2 summary-text">${esc(a.summary)}</div>
+          <button onclick="toggleSummary(this)" class="text-xs font-bold text-primary mt-1 hover:underline">Read more</button>
+        </div>` : ''}
       </td>
       <td class="py-5 px-5"><div class="flex flex-wrap gap-1">${kws}</div></td>
       <td class="py-5 px-5">
@@ -1349,6 +1352,12 @@ function render() {
       </td>
     </tr>`;
   }).join('');
+}
+
+function toggleSummary(btn) {
+  const div = btn.previousElementSibling;
+  const expanded = div.classList.toggle('line-clamp-2');
+  btn.textContent = expanded ? 'Read more' : 'Read less';
 }
 
 function sortBy(col) {
