@@ -267,6 +267,9 @@ def clean_text(text):
     for sig in binary_signatures:
         if sig in text[:200]:
             return ''
+    # Strip HTML entities like &#8230; [&#8230;] &hellip; and leftover brackets
+    text = re.sub(r'\[&#\d+;\]|\[&\w+;\]|\[…\]|\[\.\.\.\]', '', text)
+    text = re.sub(r'&#\d+;|&[a-z]{2,8};', ' ', text)
     # Keep ASCII printable chars + common Western accented letters (Latin-1)
     text = re.sub(r'[^\x20-\x7E\xC0-\xFF\n]', ' ', text)
     text = re.sub(r'\s+', ' ', text).strip()
@@ -1380,10 +1383,12 @@ function populateWebsiteFilter() {
 }
 
 // \u2500\u2500 Trending \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-const FEATURED=['google','gemini','chatgpt','openai','anthropic','nvidia','nemoclaw','nemo','copilot','notebooklm','microsoft','cursor','figma','perplexity','qwen','kimi','gpt','claude'];
+const FEATURED=['google','gemini','chatgpt','openai','anthropic','nvidia','nemoclaw','nemo','copilot','notebooklm','microsoft','cursor','figma','perplexity','qwen','kimi','gpt','claude','deepmind','mistral','cohere','hugging'];
+const EXCLUDED_SITES=['verge','techcrunch','bloomberg','reuters','wired','cnbc','bbc','cnn','forbes','wsj','nytimes','guardian','engadget','mashable','gizmodo','zdnet','cnet','axios','venturebeat'];
 function featuredScore(a) {
-  // Only match against company/website — not article title — so news aggregators (Verge, TC) are excluded
-  const txt=((a.company||'')+' '+(a.website||'')).toLowerCase();
+  const site=(a.website||'').toLowerCase();
+  if (EXCLUDED_SITES.some(s=>site.includes(s))) return 0;
+  const txt=(site+' '+(a.company||'').toLowerCase());
   return FEATURED.reduce((s,t)=>s+(txt.includes(t)?1:0),0);
 }
 
