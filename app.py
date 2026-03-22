@@ -258,10 +258,27 @@ def url_has_recent(url, days=3):
 
 # ─────────────────────── Text utilities ──────────────────────────────────────
 
+def clean_text(text):
+    """Remove non-printable / mojibake characters from scraped text."""
+    if not text:
+        return ''
+    # Keep ASCII printable chars + common Western accented letters (Latin-1)
+    text = re.sub(r'[^\x20-\x7E\xC0-\xFF\n]', ' ', text)
+    text = re.sub(r'\s+', ' ', text).strip()
+    return text
+
+
 def summarize(text, max_words=120):
     if not text:
         return ''
+    text = clean_text(text)
+    if not text:
+        return ''
     words = text.split()
+    # If cleaning left mostly garbage (very short or no real words), return empty
+    real_words = [w for w in words if w.isalpha() and len(w) > 1]
+    if len(real_words) < 3:
+        return ''
     result = ' '.join(words[:max_words])
     if len(words) > max_words:
         result += '...'
@@ -871,6 +888,10 @@ def process_source(source, days=3):
         date_iso = article['date_iso']
         if not date_iso:
             date_iso = parse_date_to_iso(meta.get('date_text', ''))
+
+        # Skip articles with a confirmed date outside the window
+        if date_iso and not is_recent(date_iso, days):
+            continue
 
         # Image: prefer article page og:image, fall back to listing thumbnail
         image_url = article['image_url'] or meta.get('image_url', '')
