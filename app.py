@@ -1373,7 +1373,8 @@ function populateWebsiteFilter() {
 // \u2500\u2500 Trending \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 const FEATURED=['google','gemini','chatgpt','openai','anthropic','nvidia','nemoclaw','nemo','copilot','notebooklm','microsoft','cursor','figma','perplexity','qwen','kimi','gpt','claude'];
 function featuredScore(a) {
-  const txt=((a.title||'')+' '+(a.company||'')+' '+(a.keywords||[]).join(' ')).toLowerCase();
+  // Only match against company/website — not article title — so news aggregators (Verge, TC) are excluded
+  const txt=((a.company||'')+' '+(a.website||'')).toLowerCase();
   return FEATURED.reduce((s,t)=>s+(txt.includes(t)?1:0),0);
 }
 
@@ -1398,10 +1399,10 @@ function renderTrending() {
       return (b.date_iso||'')>(a.date_iso||'')?1:-1;
     });
   }
-  const top=pool.slice(0,10);
+  const top=pool.slice(0,12);
   const lead=top[0];
   const sec=top.slice(1,3);
-  const grid=top.slice(3,9);
+  const grid=top.slice(3,12);
 
   $('trending-hero').innerHTML=`
     <div class="lg:col-span-2 group relative overflow-hidden rounded-2xl bg-surface-container-lowest border border-outline-variant/10 shadow-sm cursor-pointer"
