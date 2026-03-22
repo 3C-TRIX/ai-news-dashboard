@@ -259,9 +259,14 @@ def url_has_recent(url, days=3):
 # ─────────────────────── Text utilities ──────────────────────────────────────
 
 def clean_text(text):
-    """Remove non-printable / mojibake characters from scraped text."""
+    """Remove non-printable / binary / mojibake characters from scraped text."""
     if not text:
         return ''
+    # Reject binary data (JPEG, PNG, PDF, etc.)
+    binary_signatures = ['JFIF', '\x89PNG', '%PDF', 'GIF8', '\xff\xd8']
+    for sig in binary_signatures:
+        if sig in text[:200]:
+            return ''
     # Keep ASCII printable chars + common Western accented letters (Latin-1)
     text = re.sub(r'[^\x20-\x7E\xC0-\xFF\n]', ' ', text)
     text = re.sub(r'\s+', ' ', text).strip()
@@ -275,9 +280,9 @@ def summarize(text, max_words=120):
     if not text:
         return ''
     words = text.split()
-    # If cleaning left mostly garbage (very short or no real words), return empty
+    # Require at least 50% real English-looking words, else it's garbage
     real_words = [w for w in words if w.isalpha() and len(w) > 1]
-    if len(real_words) < 3:
+    if len(real_words) < 5 or len(real_words) / max(len(words), 1) < 0.4:
         return ''
     result = ' '.join(words[:max_words])
     if len(words) > max_words:
