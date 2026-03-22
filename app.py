@@ -934,403 +934,623 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI News Dashboard</title>
+<title>3C TRIX AI | Intelligence Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        "primary": "#001e0c",
+        "on-primary": "#ffffff",
+        "primary-container": "#0e341d",
+        "primary-fixed": "#c3edca",
+        "primary-fixed-dim": "#a7d0af",
+        "on-primary-fixed": "#00210e",
+        "on-primary-fixed-variant": "#294e35",
+        "secondary": "#516355",
+        "secondary-container": "#d3e8d6",
+        "on-secondary-container": "#56695b",
+        "secondary-fixed": "#d3e8d6",
+        "on-secondary-fixed-variant": "#394b3e",
+        "tertiary-fixed": "#d9e6da",
+        "on-tertiary-fixed-variant": "#3e4a41",
+        "surface": "#faf9f6",
+        "surface-container-lowest": "#ffffff",
+        "surface-container-low": "#f4f4f0",
+        "surface-container": "#eeeeea",
+        "surface-container-high": "#e8e8e5",
+        "on-surface": "#1a1c1a",
+        "on-surface-variant": "#424842",
+        "outline": "#727971",
+        "outline-variant": "#c1c8c0",
+        "background": "#faf9f6",
+      },
+      fontFamily: {
+        "headline": ["Manrope", "sans-serif"],
+        "body": ["Inter", "sans-serif"],
+      },
+    },
+  },
+}
+</script>
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  background: #fff;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
-  font-size: 13px;
-  color: #222;
-  padding: 22px 26px;
-}
-h1 { font-size: 19px; font-weight: 700; color: #111; margin-bottom: 3px; }
-.subtitle { font-size: 12px; color: #777; margin-bottom: 16px; }
-
-/* Controls */
-.toolbar {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 14px;
-}
-.refresh-btn {
-  padding: 7px 16px;
-  background: #1a73e8;
-  color: #fff;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 600;
-}
-.refresh-btn:hover:not(:disabled) { background: #1558c0; }
-.refresh-btn:disabled { background: #93b8f5; cursor: not-allowed; }
-.filter-group {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-.filter-group label { font-size: 12px; color: #555; font-weight: 500; }
-.filter-group select,
-.filter-group input[type="text"] {
-  padding: 5px 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 12px;
-  background: #fff;
-  outline: none;
-}
-.filter-group select:focus,
-.filter-group input:focus { border-color: #1a73e8; }
-#status { font-size: 12px; color: #555; margin-left: auto; }
-#status.loading { color: #1a73e8; }
-#status.error   { color: #c0392b; }
-
-/* Table */
-.table-wrap { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
-thead th {
-  background: #f5f6f7;
-  border: 1px solid #d8d8d8;
-  padding: 9px 10px;
-  text-align: left;
-  font-weight: 700;
-  color: #333;
-  white-space: nowrap;
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  user-select: none;
-}
-thead th.sortable { cursor: pointer; }
-thead th.sortable:hover { background: #eaecef; }
-.sort-icon { margin-left: 4px; opacity: .5; font-size: 10px; }
-.sort-icon.active { opacity: 1; color: #1a73e8; }
-tbody td {
-  border: 1px solid #e6e6e6;
-  padding: 8px 10px;
-  vertical-align: top;
-  line-height: 1.5;
-}
-tbody tr:nth-child(even) td { background: #fafafa; }
-tbody tr:hover td { background: #eef4ff; }
-
-/* Column widths */
-.col-date     { width: 92px; white-space: nowrap; color: #333; font-size: 12px; font-weight: 500; }
-.col-company  { width: 115px; font-weight: 600; color: #111; }
-.col-website  { width: 140px; color: #444; }
-.col-source   { width: 68px; text-align: center; }
-.col-summary  { width: 220px; max-width: 240px; word-wrap: break-word; overflow-wrap: break-word; white-space: normal; }
-.col-keywords { width: 175px; }
-.col-image    { width: 96px; text-align: center; }
-
-.art-title  { font-weight: 600; color: #111; margin-bottom: 5px; font-size: 12.5px; }
-.art-summary{ color: #555; word-wrap: break-word; overflow-wrap: break-word; line-height: 1.45; }
-.src-link {
-  display: inline-block;
-  padding: 3px 9px;
-  background: #e8f0fe;
-  color: #1a73e8;
-  text-decoration: none;
-  border-radius: 4px;
-  font-size: 11.5px;
-  font-weight: 600;
-}
-.src-link:hover { background: #d2e3fc; }
-.kw {
-  display: inline-block;
-  padding: 2px 7px;
-  border-radius: 3px;
-  font-size: 11px;
-  margin: 2px 2px 2px 0;
-  font-weight: 500;
-}
-.thumb {
-  max-width: 84px;
-  max-height: 64px;
-  object-fit: cover;
-  border-radius: 4px;
-  border: 1px solid #e0e0e0;
-}
-.empty { text-align: center; padding: 50px; color: #aaa; font-size: 13px; }
-.spinner {
-  display: inline-block;
-  width: 12px; height: 12px;
-  border: 2px solid #1a73e8;
-  border-radius: 50%;
-  border-top-color: transparent;
-  animation: spin .7s linear infinite;
-  vertical-align: middle;
-  margin-right: 5px;
-}
+.material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
 @keyframes spin { to { transform: rotate(360deg); } }
+.spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid #c1c8c0; border-top-color: #001e0c; border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; margin-right: 6px; }
+.kw-tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+.thumb { width: 40px; height: 40px; object-fit: cover; border-radius: 8px; }
+.nav-item { transition: all 0.15s; }
+.sort-dim { opacity: 0.4; }
+.line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 </style>
 </head>
-<body>
+<body class="bg-surface font-body text-on-surface">
 
-<h1>AI News Dashboard</h1>
-<p class="subtitle" id="today-label"></p>
+<!-- SIDEBAR (desktop) -->
+<aside class="hidden lg:flex flex-col h-screen w-64 fixed left-0 top-0 z-40 bg-surface-container-low py-6 px-4">
+  <div class="px-2 mb-8">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
+        <span class="material-symbols-outlined text-white">psychology</span>
+      </div>
+      <div>
+        <h2 class="text-base font-black font-headline text-primary leading-tight">3C TRIX AI</h2>
+        <p class="text-xs text-on-surface-variant opacity-70 font-medium">Intelligence Dashboard</p>
+      </div>
+    </div>
+  </div>
+  <nav class="flex flex-col gap-1 flex-grow">
+    <button onclick="switchTab('latest')" id="nav-latest" class="nav-item flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-headline font-semibold text-left w-full bg-primary text-white shadow-md">
+      <span class="material-symbols-outlined text-xl">newspaper</span> Latest News
+    </button>
+    <button onclick="switchTab('trending')" id="nav-trending" class="nav-item flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-headline font-semibold text-left w-full text-on-surface-variant hover:bg-surface-container">
+      <span class="material-symbols-outlined text-xl">trending_up</span> Trending
+    </button>
+    <button onclick="switchTab('insights')" id="nav-insights" class="nav-item flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-headline font-semibold text-left w-full text-on-surface-variant hover:bg-surface-container">
+      <span class="material-symbols-outlined text-xl">auto_awesome</span> AI Insights
+    </button>
+  </nav>
+  <div class="mt-auto px-2 pt-4 border-t border-outline-variant/20">
+    <a href="#" class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:text-primary text-sm font-semibold font-headline">
+      <span class="material-symbols-outlined text-lg">help_outline</span> Help
+    </a>
+  </div>
+</aside>
 
-<div class="toolbar">
-  <button class="refresh-btn" id="refresh-btn" onclick="fetchNews(true)">&#8635; Refresh</button>
+<!-- TOP HEADER -->
+<header class="fixed top-0 left-0 lg:left-64 right-0 h-16 z-50 bg-surface/90 backdrop-blur-xl border-b border-outline-variant/20">
+  <div class="flex items-center justify-between h-full px-6">
+    <div class="flex items-center gap-3 lg:hidden">
+      <div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+        <span class="material-symbols-outlined text-white text-sm">psychology</span>
+      </div>
+      <span class="font-headline font-black text-primary text-lg">3C TRIX AI</span>
+    </div>
+    <div class="hidden lg:flex items-center gap-2">
+      <span id="header-tab-label" class="text-xl font-headline font-extrabold text-primary">Latest News</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <div id="status" class="text-xs text-on-surface-variant font-medium"></div>
+    </div>
+  </div>
+</header>
 
-  <div class="filter-group">
-    <label for="f-days">Period:</label>
-    <select id="f-days" onchange="applyFilters()">
-      <option value="3" selected>Last 3 days</option>
-      <option value="2">Last 2 days</option>
-      <option value="1">Today only</option>
-    </select>
+<!-- MAIN CONTENT -->
+<main class="lg:ml-64 pt-16 min-h-screen">
+
+<!-- ══════════════════ TAB: LATEST NEWS ══════════════════ -->
+<div id="tab-latest" class="tab-content active px-6 md:px-8 py-8">
+  <div class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+    <div>
+      <h1 class="text-3xl font-black font-headline tracking-tighter text-primary">Latest News</h1>
+      <p class="text-on-surface-variant mt-1 font-medium text-sm" id="today-label"></p>
+    </div>
+    <div class="flex items-center bg-secondary-container/50 px-4 py-2 rounded-xl border border-secondary-container">
+      <span class="material-symbols-outlined text-on-secondary-container mr-2 text-sm" style="font-variation-settings:'FILL' 1">analytics</span>
+      <span class="text-sm font-bold text-on-secondary-container" id="count-label">Loading\u2026</span>
+    </div>
   </div>
 
-  <div class="filter-group">
-    <label for="f-website">Website:</label>
-    <select id="f-website" onchange="applyFilters()">
-      <option value="">All websites</option>
-    </select>
+  <!-- Control bar -->
+  <div class="bg-surface-container-lowest rounded-2xl p-4 mb-6 flex flex-wrap items-center gap-3 shadow-sm border border-outline-variant/10">
+    <button id="refresh-btn" onclick="fetchNews(true)"
+      class="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:opacity-90 active:scale-95 transition-all shadow-md font-headline">
+      <span class="material-symbols-outlined text-sm">refresh</span> Refresh
+    </button>
+    <div class="h-8 w-px bg-outline-variant/30 hidden md:block"></div>
+    <div class="flex items-center gap-2">
+      <label class="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Period</label>
+      <div class="relative">
+        <select id="f-days" onchange="applyFilters()"
+          class="appearance-none bg-surface-container-low border-none rounded-lg py-2 pl-4 pr-8 text-sm font-semibold text-primary focus:ring-2 focus:ring-primary cursor-pointer">
+          <option value="1">Last 24h</option>
+          <option value="2">Last 2 days</option>
+          <option value="3" selected>Last 3 days</option>
+        </select>
+        <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant text-sm">expand_more</span>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <label class="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Website</label>
+      <div class="relative">
+        <select id="f-website" onchange="applyFilters()"
+          class="appearance-none bg-surface-container-low border-none rounded-lg py-2 pl-4 pr-8 text-sm font-semibold text-primary focus:ring-2 focus:ring-primary cursor-pointer">
+          <option value="">All websites</option>
+        </select>
+        <span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant text-sm">expand_more</span>
+      </div>
+    </div>
+    <div class="flex-grow min-w-[180px] relative">
+      <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-lg">filter_list</span>
+      <input id="f-keyword" oninput="applyFilters()" type="text" placeholder="Filter by keyword\u2026"
+        class="w-full bg-surface-container-low border-none rounded-lg py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary">
+    </div>
   </div>
 
-  <div class="filter-group">
-    <label for="f-keyword">Keyword:</label>
-    <input id="f-keyword" type="text" placeholder="Filter by keyword…" oninput="applyFilters()" style="width:160px">
+  <!-- Table -->
+  <div class="bg-surface-container-lowest rounded-2xl overflow-hidden shadow-sm border border-outline-variant/10">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="bg-surface-container text-on-surface-variant text-xs font-bold uppercase tracking-widest">
+            <th class="py-4 px-5 cursor-pointer hover:text-primary whitespace-nowrap" onclick="sortBy('date_iso')">
+              Date <span id="sort-date_iso" class="sort-dim">\u2195</span>
+            </th>
+            <th class="py-4 px-5 cursor-pointer hover:text-primary" onclick="sortBy('company')">
+              Company <span id="sort-company" class="sort-dim">\u2195</span>
+            </th>
+            <th class="py-4 px-5 cursor-pointer hover:text-primary whitespace-nowrap" onclick="sortBy('website')">
+              Website <span id="sort-website" class="sort-dim">\u2195</span>
+            </th>
+            <th class="py-4 px-5 text-center">Source</th>
+            <th class="py-4 px-5" style="width:32%">Title &amp; Summary</th>
+            <th class="py-4 px-5">Keywords</th>
+            <th class="py-4 px-5 text-right">Likes &amp; Image</th>
+          </tr>
+        </thead>
+        <tbody id="tbody" class="divide-y divide-surface-container">
+          <tr><td colspan="7" class="py-12 text-center text-on-surface-variant">
+            <span class="spinner"></span>Loading\u2026
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="bg-surface-container p-4 flex items-center justify-between">
+      <span class="text-xs font-medium text-on-surface-variant" id="table-footer">\u2014</span>
+    </div>
   </div>
-
-  <span id="status">Auto-loading news…</span>
 </div>
 
-<div class="table-wrap">
-<table id="tbl">
-  <thead>
-    <tr>
-      <th class="col-date sortable" onclick="sortBy('date_iso')">
-        Date <span class="sort-icon active" id="si-date_iso">▾</span>
-      </th>
-      <th class="col-company sortable" onclick="sortBy('company')">
-        Company <span class="sort-icon" id="si-company"></span>
-      </th>
-      <th class="col-website sortable" onclick="sortBy('website')">
-        Website <span class="sort-icon" id="si-website"></span>
-      </th>
-      <th class="col-source">Source</th>
-      <th class="col-summary">Title &amp; Summary</th>
-      <th class="col-keywords">Keywords</th>
-      <th class="col-image">Image</th>
-    </tr>
-  </thead>
-  <tbody id="tbody">
-    <tr><td colspan="7" class="empty"><span class="spinner"></span>Loading…</td></tr>
-  </tbody>
-</table>
+<!-- ══════════════════ TAB: TRENDING ══════════════════ -->
+<div id="tab-trending" class="tab-content px-6 md:px-8 py-8">
+  <header class="mb-10">
+    <span class="inline-block px-3 py-1 bg-secondary-container text-on-secondary-container text-xs font-bold rounded-full mb-4 uppercase tracking-widest">Global Trends</span>
+    <h1 class="text-4xl md:text-5xl font-headline font-extrabold text-on-surface tracking-tighter leading-none">Trending Intelligence.</h1>
+    <p class="mt-3 text-on-surface-variant max-w-xl text-base leading-relaxed">The most-liked AI news from the last 3 days. Like articles in Latest News to surface them here.</p>
+  </header>
+  <section id="trending-hero" class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
+    <div class="lg:col-span-3 text-center py-12 text-on-surface-variant">
+      <span class="spinner"></span>Loading trending articles\u2026
+    </div>
+  </section>
+  <section>
+    <h2 class="text-xl font-headline font-extrabold tracking-tight mb-6">High Engagement Feed</h2>
+    <div id="trending-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+  </section>
 </div>
+
+<!-- ══════════════════ TAB: AI INSIGHTS ══════════════════ -->
+<div id="tab-insights" class="tab-content px-6 md:px-8 py-8">
+  <header class="mb-12">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary-container text-on-secondary-container text-xs font-bold tracking-widest uppercase mb-4">
+      <span class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 1">auto_awesome</span>
+      Synthesized Analysis
+    </div>
+    <h1 class="text-4xl md:text-5xl font-headline font-extrabold tracking-tighter text-on-surface leading-none">AI Intelligence Briefs.</h1>
+    <p class="mt-3 text-on-surface-variant max-w-xl text-base leading-relaxed">Three synthesized analyses of what's happening across the AI landscape right now, generated from the latest scraped news.</p>
+  </header>
+  <div id="insights-container" class="space-y-8">
+    <div class="text-center py-16 text-on-surface-variant">
+      <span class="spinner"></span>Generating insights\u2026
+    </div>
+  </div>
+</div>
+
+</main>
+
+<!-- MOBILE BOTTOM NAV -->
+<nav class="lg:hidden fixed bottom-0 left-0 right-0 bg-surface/95 backdrop-blur-xl border-t border-outline-variant/20 h-16 flex items-center justify-around z-50">
+  <button onclick="switchTab('latest')" id="mob-latest" class="flex flex-col items-center gap-0.5 text-xs font-bold text-primary">
+    <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">newspaper</span> News
+  </button>
+  <button onclick="switchTab('trending')" id="mob-trending" class="flex flex-col items-center gap-0.5 text-xs font-bold text-on-surface-variant">
+    <span class="material-symbols-outlined">trending_up</span> Trending
+  </button>
+  <button onclick="switchTab('insights')" id="mob-insights" class="flex flex-col items-center gap-0.5 text-xs font-bold text-on-surface-variant">
+    <span class="material-symbols-outlined">auto_awesome</span> AI Trix
+  </button>
+</nav>
 
 <script>
-// ── Keyword color palette (bg / text pairs) ──
-const KW_PALETTE = [
-  {bg:'#dbeafe', tx:'#1e40af'}, // blue
-  {bg:'#dcfce7', tx:'#166534'}, // green
-  {bg:'#fef9c3', tx:'#854d0e'}, // yellow
-  {bg:'#fce7f3', tx:'#9d174d'}, // pink
-  {bg:'#ede9fe', tx:'#5b21b6'}, // purple
-  {bg:'#ffedd5', tx:'#9a3412'}, // orange
-  {bg:'#cffafe', tx:'#155e75'}, // cyan
-  {bg:'#f0fdf4', tx:'#14532d'}, // mint
-  {bg:'#fff1f2', tx:'#9f1239'}, // rose
-  {bg:'#faf5ff', tx:'#6b21a8'}, // violet
-];
-// Consistent color per keyword word (hash)
-const kwColorMap = {};
-function kwColor(word) {
-  if (kwColorMap[word]) return kwColorMap[word];
-  let h = 0;
-  for (let c of word) h = (h * 31 + c.charCodeAt(0)) >>> 0;
-  const color = KW_PALETTE[h % KW_PALETTE.length];
-  kwColorMap[word] = color;
-  return color;
-}
-
-// ── State ──
+// \u2500\u2500 State \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 let allData = [];
-let sortState = { col: 'date_iso', dir: 'desc' };
-let filters   = { website: '', keyword: '', days: 3 };
+let currentTab = 'latest';
+let sortState = {col: 'date_iso', dir: 'desc'};
+let filters = {website: '', keyword: '', days: 3};
+let insightsLoaded = false;
+let pollTimer = null;
 
-const $ = id => document.getElementById(id);
-
+// \u2500\u2500 Utilities \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+function $(id) { return document.getElementById(id); }
 function esc(s) {
-  return String(s||'')
+  return String(s == null ? '' : s)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;')
     .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
-
 function fmtDate(iso) {
-  if (!iso) return '—';
-  try {
-    const [y,m,d] = iso.split('-');
-    const months = ['Jan','Feb','Mar','Apr','May','Jun',
-                    'Jul','Aug','Sep','Oct','Nov','Dec'];
-    return `${months[+m-1]} ${+d}, ${y}`;
-  } catch { return iso; }
+  if (!iso) return '\u2014';
+  const d = new Date(iso + 'T12:00:00');
+  return d.toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'});
+}
+function fmtLikes(n) {
+  if (n >= 1000) return (n/1000).toFixed(1).replace('.0','') + 'k';
+  return n ? String(n) : '0';
 }
 
+// \u2500\u2500 Likes \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+function getLikes(url) {
+  try { return JSON.parse(localStorage.getItem('ai_likes')||'{}')[url] || 0; }
+  catch { return 0; }
+}
+function isLiked(url) {
+  try { return !!JSON.parse(localStorage.getItem('ai_liked')||'{}')[url]; }
+  catch { return false; }
+}
+function toggleLike(url, btn) {
+  try {
+    const likes = JSON.parse(localStorage.getItem('ai_likes')||'{}');
+    const liked = JSON.parse(localStorage.getItem('ai_liked')||'{}');
+    if (liked[url]) { delete liked[url]; likes[url] = Math.max(0,(likes[url]||1)-1); }
+    else { liked[url]=true; likes[url]=(likes[url]||0)+1; }
+    localStorage.setItem('ai_likes', JSON.stringify(likes));
+    localStorage.setItem('ai_liked', JSON.stringify(liked));
+    if (btn) {
+      btn.querySelector('.like-icon').style.fontVariationSettings = liked[url] ? "'FILL' 1" : "'FILL' 0";
+      btn.querySelector('.like-count').textContent = fmtLikes(likes[url]||0);
+      btn.classList.toggle('text-red-500', !!liked[url]);
+      btn.classList.toggle('text-on-surface-variant', !liked[url]);
+    }
+    if (currentTab === 'trending') renderTrending();
+  } catch(e) {}
+}
+
+// \u2500\u2500 Keyword colors \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+const KW_PAL = [
+  ['#c3edca','#294e35'],['#d3e8d6','#394b3e'],['#d9e6da','#3e4a41'],
+  ['#e8d5c4','#5a3a1a'],['#d5dce8','#1a2d5a'],['#e8d5e8','#5a1a5a'],
+  ['#e8e8c4','#5a5a1a'],['#c4e8e8','#1a5a5a'],['#e8c4c4','#5a1a1a'],
+];
+function kwColor(w) {
+  let h=0; for (let c of w) h=(h*31+c.charCodeAt(0))&0xffff;
+  return KW_PAL[h % KW_PAL.length];
+}
+
+// \u2500\u2500 Tab switching \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  $('tab-'+tab).classList.add('active');
+  ['latest','trending','insights'].forEach(t => {
+    const n=$('nav-'+t);
+    if (!n) return;
+    if (t===tab) { n.className=n.className.replace(/text-on-surface-variant|hover:bg-surface-container/g,'').trim()+' bg-primary text-white shadow-md'; }
+    else { n.className=n.className.replace(/bg-primary|text-white|shadow-md/g,'').trim()+' text-on-surface-variant hover:bg-surface-container'; }
+  });
+  ['latest','trending','insights'].forEach(t => {
+    const m=$('mob-'+t);
+    if (!m) return;
+    m.classList.toggle('text-primary', t===tab);
+    m.classList.toggle('text-on-surface-variant', t!==tab);
+  });
+  const labels={latest:'Latest News',trending:'Trending',insights:'AI Insights'};
+  $('header-tab-label').textContent = labels[tab]||'';
+  if (tab==='trending') renderTrending();
+  if (tab==='insights' && !insightsLoaded) fetchInsights();
+}
+
+// \u2500\u2500 Sort icons \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 function updateSortIcons() {
   ['date_iso','company','website'].forEach(col => {
-    const el = $('si-' + col);
+    const el = $('sort-'+col);
     if (!el) return;
-    if (col === sortState.col) {
-      el.textContent = sortState.dir === 'asc' ? '▴' : '▾';
-      el.className = 'sort-icon active';
-    } else {
-      el.textContent = '⇅';
-      el.className = 'sort-icon';
-    }
+    el.className = sortState.col===col ? '' : 'sort-dim';
+    el.textContent = sortState.col===col ? (sortState.dir==='asc'?'\u2191':'\u2193') : '\u2195';
   });
 }
 
+// \u2500\u2500 Table render \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 function render() {
-  const daysAgo = parseInt(filters.days) || 3;
+  const kw = filters.keyword.toLowerCase();
+  const ws = filters.website;
   const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - daysAgo + 1);
-  cutoff.setHours(0,0,0,0);
-  const cutoffIso = cutoff.toISOString().slice(0,10);
+  cutoff.setDate(cutoff.getDate() - (filters.days - 1));
+  const cutISO = cutoff.toISOString().slice(0,10);
 
-  let filtered = allData.filter(a => {
-    if (filters.website && a.website !== filters.website) return false;
-    if (filters.keyword) {
-      const kw = filters.keyword.toLowerCase();
-      if (!(a.keywords||[]).some(k => k.toLowerCase().includes(kw))) return false;
-    }
-    if (a.date_iso && a.date_iso < cutoffIso) return false;
+  let arr = allData.filter(a => {
+    if (ws && a.website !== ws) return false;
+    if (kw && !((a.title||'').toLowerCase().includes(kw) ||
+                (a.summary||'').toLowerCase().includes(kw) ||
+                (a.keywords||[]).some(k=>k.toLowerCase().includes(kw)))) return false;
+    if (a.date_iso && a.date_iso < cutISO) return false;
     return true;
   });
 
-  filtered.sort((a, b) => {
-    let va = String(a[sortState.col] || '').toLowerCase();
-    let vb = String(b[sortState.col] || '').toLowerCase();
-    if (va < vb) return sortState.dir === 'asc' ? -1 : 1;
-    if (va > vb) return sortState.dir === 'asc' ?  1 : -1;
-    return 0;
+  arr.sort((a,b) => {
+    const va=a[sortState.col]||'', vb=b[sortState.col]||'';
+    const c = va<vb?-1:va>vb?1:0;
+    return sortState.dir==='asc'?c:-c;
   });
 
-  if (!filtered.length) {
-    $('tbody').innerHTML = '<tr><td colspan="7" class="empty">No articles match the current filters.</td></tr>';
-    $('status').textContent = '0 results';
+  $('count-label').textContent = allData.length + ' total articles';
+  $('table-footer').textContent = arr.length + ' article' + (arr.length!==1?'s':'') + ' shown';
+
+  if (!arr.length) {
+    $('tbody').innerHTML = '<tr><td colspan="7" class="py-12 text-center text-on-surface-variant">No articles match your filters.</td></tr>';
     return;
   }
 
-  $('tbody').innerHTML = filtered.map(a => {
+  $('tbody').innerHTML = arr.map(a => {
     const kws = (a.keywords||[]).map(k => {
-      const c = kwColor(k);
-      return `<span class="kw" style="background:${c.bg};color:${c.tx}">${esc(k)}</span>`;
-    }).join('');
+      const [bg,fg]=kwColor(k);
+      return `<span class="kw-tag" style="background:${bg};color:${fg}">${esc(k)}</span>`;
+    }).join(' ');
     const img = a.image_url
       ? `<img class="thumb" src="${esc(a.image_url)}" loading="lazy" onerror="this.style.display='none'" alt="">`
-      : '—';
-    return `<tr>
-      <td class="col-date">${fmtDate(a.date_iso)}</td>
-      <td class="col-company">${esc(a.company)}</td>
-      <td class="col-website">${esc(a.website)}</td>
-      <td class="col-source"><a class="src-link" href="${esc(a.link)}" target="_blank" rel="noopener">Link ↗</a></td>
-      <td class="col-summary">
-        <div class="art-title">${esc(a.title)}</div>
-        <div class="art-summary">${esc(a.summary)}</div>
+      : '<div class="w-10 h-10 rounded-lg bg-surface-container-high flex-shrink-0"></div>';
+    const liked = isLiked(a.link);
+    const likes = getLikes(a.link);
+    const lid = 'lb'+btoa(encodeURIComponent(a.link||'')).replace(/[^a-z0-9]/gi,'').slice(0,10);
+    return `<tr class="hover:bg-surface-container-low transition-colors group">
+      <td class="py-5 px-5 text-sm font-semibold whitespace-nowrap">${fmtDate(a.date_iso)}</td>
+      <td class="py-5 px-5">
+        <div class="flex items-center gap-2">
+          <div class="w-7 h-7 rounded bg-primary-fixed flex items-center justify-center text-xs font-bold text-on-primary-fixed-variant flex-shrink-0">${esc((a.company||'?')[0].toUpperCase())}</div>
+          <span class="text-sm font-bold text-primary">${esc(a.company)}</span>
+        </div>
       </td>
-      <td class="col-keywords">${kws}</td>
-      <td class="col-image">${img}</td>
+      <td class="py-5 px-5 text-sm text-on-surface-variant">${esc(a.website)}</td>
+      <td class="py-5 px-5 text-center">
+        <a href="${esc(a.link)}" target="_blank" rel="noopener"
+          class="inline-flex items-center justify-center p-2 rounded-lg bg-secondary-container text-on-secondary-container hover:bg-primary hover:text-white transition-all">
+          <span class="material-symbols-outlined text-base">link</span>
+        </a>
+      </td>
+      <td class="py-5 px-5">
+        <div class="text-sm font-extrabold text-primary mb-1 font-headline leading-snug">${esc(a.title)}</div>
+        ${a.summary ? `<div class="text-xs text-on-surface-variant leading-relaxed line-clamp-2">${esc(a.summary)}</div>` : ''}
+      </td>
+      <td class="py-5 px-5"><div class="flex flex-wrap gap-1">${kws}</div></td>
+      <td class="py-5 px-5">
+        <div class="flex items-center justify-end gap-3">
+          <button id="${lid}" onclick="toggleLike('${esc(a.link)}',this)"
+            class="flex items-center gap-1 text-xs font-bold transition-colors ${liked?'text-red-500':'text-on-surface-variant'} hover:text-red-500">
+            <span class="material-symbols-outlined like-icon text-sm" style="font-variation-settings:${liked?"'FILL' 1":"'FILL' 0"}">favorite</span>
+            <span class="like-count">${fmtLikes(likes)}</span>
+          </button>
+          ${img}
+        </div>
+      </td>
     </tr>`;
   }).join('');
-
-  $('status').textContent =
-    `${filtered.length} article${filtered.length!==1?'s':''} shown`;
 }
 
 function sortBy(col) {
-  if (sortState.col === col) {
-    sortState.dir = sortState.dir === 'asc' ? 'desc' : 'asc';
-  } else {
-    sortState.col = col;
-    sortState.dir = col === 'date_iso' ? 'desc' : 'asc';
-  }
+  if (sortState.col===col) sortState.dir=sortState.dir==='asc'?'desc':'asc';
+  else { sortState.col=col; sortState.dir=col==='date_iso'?'desc':'asc'; }
   updateSortIcons();
   render();
 }
-
 function applyFilters() {
-  filters.website = $('f-website').value;
-  filters.keyword = $('f-keyword').value.trim();
-  filters.days    = parseInt($('f-days').value) || 3;
+  filters.website=$('f-website').value;
+  filters.keyword=$('f-keyword').value.trim();
+  filters.days=parseInt($('f-days').value)||3;
   render();
 }
-
 function populateWebsiteFilter() {
-  const websites = [...new Set(allData.map(a => a.website))].sort();
-  const sel = $('f-website');
-  const cur = sel.value;
-  sel.innerHTML = '<option value="">All websites</option>' +
-    websites.map(w => `<option value="${esc(w)}"${w===cur?' selected':''}>${esc(w)}</option>`).join('');
+  const sites=[...new Set(allData.map(a=>a.website))].sort();
+  const sel=$('f-website'), cur=sel.value;
+  sel.innerHTML='<option value="">All websites</option>'+
+    sites.map(w=>`<option value="${esc(w)}"${w===cur?' selected':''}>${esc(w)}</option>`).join('');
 }
 
+// \u2500\u2500 Trending \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+function renderTrending() {
+  if (!allData.length) {
+    $('trending-hero').innerHTML='<div class="lg:col-span-3 py-12 text-center text-on-surface-variant">No data yet \u2014 please wait for news to load.</div>';
+    $('trending-grid').innerHTML='';
+    return;
+  }
+  const sorted=[...allData].sort((a,b)=>{
+    const la=getLikes(a.link), lb=getLikes(b.link);
+    if (lb!==la) return lb-la;
+    return (b.date_iso||'')>(a.date_iso||'')?1:-1;
+  });
+  const top=sorted.slice(0,10);
+  const lead=top[0];
+  const sec=top.slice(1,3);
+  const grid=top.slice(3,9);
+
+  $('trending-hero').innerHTML=`
+    <div class="lg:col-span-2 group relative overflow-hidden rounded-2xl bg-surface-container-lowest border border-outline-variant/10 shadow-sm cursor-pointer"
+      onclick="window.open('${esc(lead.link)}','_blank')">
+      ${lead.image_url?`<div class="aspect-video overflow-hidden"><img src="${esc(lead.image_url)}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt=""></div>`:'<div class="aspect-video bg-gradient-to-br from-primary-fixed to-secondary-container"></div>'}
+      <div class="p-8">
+        <div class="flex items-center justify-between mb-4">
+          <span class="px-3 py-1 bg-primary text-white text-xs font-bold rounded-full uppercase tracking-widest">Top Engagement</span>
+          <div class="flex items-center gap-1 text-primary font-bold">
+            <span class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 1">favorite</span>
+            <span>${fmtLikes(getLikes(lead.link))}</span>
+          </div>
+        </div>
+        <h2 class="text-2xl font-headline font-extrabold mb-3 group-hover:text-primary transition-colors leading-snug">${esc(lead.title)}</h2>
+        ${lead.summary?`<p class="text-on-surface-variant mb-4 line-clamp-2 text-sm">${esc(lead.summary)}</p>`:''}
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-bold text-on-surface-variant">${esc(lead.company)} \u00b7 ${esc(lead.website)}</span>
+          <span class="flex items-center gap-1 text-sm font-bold text-primary group-hover:translate-x-1 transition-transform">Read Article <span class="material-symbols-outlined text-sm">arrow_forward</span></span>
+        </div>
+      </div>
+    </div>
+    <div class="space-y-5">
+      ${sec.map(a=>`
+        <article onclick="window.open('${esc(a.link)}','_blank')"
+          class="p-6 bg-surface-container-low rounded-xl hover:bg-surface-container-high transition-colors cursor-pointer group">
+          <div class="flex justify-between items-start mb-3">
+            <span class="text-xs font-bold text-on-surface-variant uppercase tracking-tight">${esc(a.website)}</span>
+            <div class="flex items-center gap-1 text-primary font-bold text-sm">
+              <span class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 1">favorite</span>
+              <span>${fmtLikes(getLikes(a.link))}</span>
+            </div>
+          </div>
+          <h3 class="text-lg font-headline font-bold mb-2 leading-snug group-hover:text-primary">${esc(a.title)}</h3>
+          ${a.summary?`<p class="text-xs text-on-surface-variant line-clamp-2 mb-3">${esc(a.summary)}</p>`:''}
+          <span class="text-xs font-black uppercase text-primary flex items-center gap-1">${esc(a.company)} <span class="material-symbols-outlined text-xs">open_in_new</span></span>
+        </article>`).join('')}
+    </div>`;
+
+  $('trending-grid').innerHTML=grid.map(a=>`
+    <div onclick="window.open('${esc(a.link)}','_blank')"
+      class="p-6 bg-surface-container-lowest rounded-xl border border-outline-variant/10 shadow-sm flex flex-col cursor-pointer hover:border-primary/30 hover:shadow-md transition-all group">
+      <div class="flex justify-between items-start mb-3">
+        <span class="text-xs font-bold text-on-surface-variant uppercase tracking-tight">${esc(a.website)}</span>
+        <div class="flex items-center gap-1 text-primary font-bold text-xs">
+          <span class="material-symbols-outlined text-xs" style="font-variation-settings:'FILL' 1">favorite</span>
+          <span>${fmtLikes(getLikes(a.link))}</span>
+        </div>
+      </div>
+      <h4 class="font-headline font-bold text-base mb-3 flex-grow leading-snug group-hover:text-primary transition-colors">${esc(a.title)}</h4>
+      <div class="mt-auto flex items-center justify-between pt-3 border-t border-outline-variant/10">
+        <span class="text-xs font-semibold text-on-surface-variant">${esc(a.company)}</span>
+        <span class="text-xs font-bold text-primary">${fmtDate(a.date_iso)}</span>
+      </div>
+    </div>`).join('');
+}
+
+// \u2500\u2500 AI Insights \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+async function fetchInsights() {
+  $('insights-container').innerHTML='<div class="text-center py-16 text-on-surface-variant"><span class="spinner"></span>Generating insights\u2026</div>';
+  try {
+    const res=await fetch('/api/insights');
+    if (!res.ok) throw new Error('HTTP '+res.status);
+    const data=await res.json();
+    insightsLoaded=true;
+    renderInsights(data.insights||[]);
+  } catch(e) {
+    $('insights-container').innerHTML=`<div class="text-center py-16 text-on-surface-variant">Could not load insights: ${esc(e.message)}</div>`;
+  }
+}
+
+function renderInsights(insights) {
+  if (!insights.length) {
+    $('insights-container').innerHTML='<div class="text-center py-16 text-on-surface-variant">No insights yet \u2014 load news first.</div>';
+    return;
+  }
+  const schemes=[
+    'bg-primary text-white',
+    'bg-secondary-container text-on-secondary-container',
+    'bg-surface-container-high text-on-surface',
+  ];
+  $('insights-container').innerHTML=insights.map((ins,i)=>`
+    <article class="rounded-2xl overflow-hidden border border-outline-variant/10 shadow-sm">
+      <div class="p-8">
+        <div class="flex items-start justify-between gap-4 mb-6">
+          <div>
+            <span class="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest mb-3 ${schemes[i%3]}">
+              Brief #${i+1} \u00b7 ${esc(ins.theme)}
+            </span>
+            <h2 class="text-2xl font-headline font-extrabold leading-snug">${esc(ins.title)}</h2>
+            <p class="text-sm text-on-surface-variant mt-2">${esc(ins.subtitle)}</p>
+          </div>
+          <span class="text-5xl font-black font-headline text-outline-variant/20 shrink-0 select-none">${String(i+1).padStart(2,'0')}</span>
+        </div>
+        <p class="text-base leading-relaxed mb-6">${esc(ins.content)}</p>
+        ${ins.keywords&&ins.keywords.length?`
+          <div class="flex flex-wrap gap-2 mb-6">
+            ${ins.keywords.map(k=>{const[b,f]=kwColor(k);return`<span class="kw-tag" style="background:${b};color:${f}">${esc(k)}</span>`;}).join('')}
+          </div>`:''}
+        <div class="border-t border-outline-variant/20 pt-5">
+          <p class="text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-3">Based on these articles</p>
+          <div class="space-y-2">
+            ${(ins.sources||[]).map(s=>`
+              <a href="${esc(s.link)}" target="_blank" rel="noopener"
+                class="flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors group">
+                <span class="material-symbols-outlined text-xs shrink-0 text-on-surface-variant">article</span>
+                <span class="line-clamp-1 group-hover:underline">${esc(s.title)}</span>
+                <span class="material-symbols-outlined text-xs shrink-0 text-on-surface-variant ml-auto">open_in_new</span>
+              </a>`).join('')}
+          </div>
+        </div>
+      </div>
+    </article>`).join('');
+}
+
+// \u2500\u2500 Status / Fetch \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
 function setStatus(msg, cls) {
-  const el = $('status');
-  el.className = cls || '';
-  el.innerHTML = msg;
+  const el=$('status');
+  if (!el) return;
+  el.className='text-xs font-medium '+(cls==='error'?'text-red-500':'text-on-surface-variant');
+  el.innerHTML=msg;
 }
-
-let _pollTimer = null;
 
 async function fetchNews(forceRefresh) {
-  if (_pollTimer) { clearTimeout(_pollTimer); _pollTimer = null; }
-  $('refresh-btn').disabled = true;
-  setStatus('<span class="spinner"></span>Fetching from all sources… (may take 1–2 min)', 'loading');
-  if (!allData.length) {
-    $('tbody').innerHTML = '<tr><td colspan="7" class="empty"><span class="spinner"></span>Loading…</td></tr>';
-  }
-
+  if ($('refresh-btn')) $('refresh-btn').disabled=true;
+  if (forceRefresh) insightsLoaded=false;
+  setStatus('<span class="spinner"></span>Fetching\u2026','loading');
   try {
-    const url = forceRefresh ? '/api/news?refresh=1' : '/api/news';
-    const res = await fetch(url);
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const data = await res.json();
-
-    const ts = data.timestamp ? new Date(data.timestamp).toLocaleTimeString() : '';
-
-    if (data.status === 'loading') {
-      setStatus('<span class="spinner"></span>Scraping all sources… will auto-refresh in 10 s', 'loading');
-      _pollTimer = setTimeout(() => fetchNews(false), 10000);
-      return;
-    }
-
-    if (data.status === 'refreshing') {
-      // Show stale data immediately, then poll for fresh
-      allData = data.articles || [];
+    const res=await fetch(forceRefresh?'/api/news?refresh=1':'/api/news');
+    if (!res.ok) throw new Error('HTTP '+res.status);
+    const data=await res.json();
+    if (data.status==='loading'||data.status==='refreshing') {
+      if (data.articles&&data.articles.length>0) {
+        allData=data.articles;
+        populateWebsiteFilter();
+        render();
+        const ts=data.timestamp?new Date(data.timestamp).toLocaleTimeString():'';
+        setStatus(`<span class="spinner"></span>Updating\u2026 (cached ${ts})`,'loading');
+      } else {
+        $('tbody').innerHTML='<tr><td colspan="7" class="py-12 text-center text-on-surface-variant"><span class="spinner"></span>Scraping 65 sources\u2026 (~2 min)</td></tr>';
+        setStatus('<span class="spinner"></span>Scraping\u2026','loading');
+      }
+      clearTimeout(pollTimer);
+      pollTimer=setTimeout(()=>fetchNews(false),8000);
+    } else {
+      clearTimeout(pollTimer);
+      allData=data.articles||[];
       populateWebsiteFilter();
-      applyFilters();
-      setStatus(`<span class="spinner"></span>Refreshing… showing ${allData.length} cached articles · ${ts}`, 'loading');
-      _pollTimer = setTimeout(() => fetchNews(false), 10000);
-      $('refresh-btn').disabled = false;
-      return;
+      render();
+      const ts=data.timestamp?new Date(data.timestamp).toLocaleTimeString():'';
+      setStatus(`${allData.length} articles \u00b7 ${ts}`);
+      if ($('refresh-btn')) $('refresh-btn').disabled=false;
+      if (currentTab==='insights') { insightsLoaded=false; fetchInsights(); }
     }
-
-    // status === 'ready'
-    allData = data.articles || [];
-    populateWebsiteFilter();
-    applyFilters();
-    setStatus(`${allData.length} total articles · ${ts}`);
   } catch(e) {
-    setStatus('Error: ' + esc(e.message), 'error');
-    $('tbody').innerHTML = `<tr><td colspan="7" class="empty">Failed: ${esc(e.message)}</td></tr>`;
-  } finally {
-    if (!_pollTimer) $('refresh-btn').disabled = false;
+    setStatus('Error: '+esc(e.message),'error');
+    $('tbody').innerHTML=`<tr><td colspan="7" class="py-12 text-center text-red-400">Failed: ${esc(e.message)}</td></tr>`;
+    if ($('refresh-btn')) $('refresh-btn').disabled=false;
   }
 }
 
-// Init
-const d = new Date();
-$('today-label').textContent = d.toLocaleDateString('en-US', {
-  weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-});
+// \u2500\u2500 Init \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+const _d=new Date();
+const _tl=$('today-label');
+if (_tl) _tl.textContent=_d.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
 updateSortIcons();
+switchTab('latest');
 fetchNews(false);
 </script>
 </body>
@@ -1342,6 +1562,54 @@ fetchNews(false);
 @app.route('/')
 def index():
     return render_template_string(HTML_TEMPLATE)
+
+
+@app.route('/api/insights')
+def get_insights():
+    articles = [a for a in (CACHE['data'] or [])
+                if a.get('summary') and len(a.get('summary', '')) > 30][:40]
+    if not articles:
+        return jsonify({'insights': [], 'status': 'no_data'})
+
+    kw_count = Counter()
+    kw_articles = {}
+    for a in articles:
+        for kw in a.get('keywords', []):
+            kw_count[kw] += 1
+            kw_articles.setdefault(kw, []).append(a)
+
+    insights = []
+    used = set()
+    for kw, _ in kw_count.most_common(12):
+        if len(insights) >= 3:
+            break
+        theme_arts = [a for a in kw_articles[kw] if a['link'] not in used][:6]
+        if len(theme_arts) < 2:
+            continue
+        for a in theme_arts:
+            used.add(a['link'])
+        companies = list({a['company'] for a in theme_arts
+                          if a.get('company') not in ('Various', '', None)})[:4]
+        summaries = [a['summary'] for a in theme_arts if a.get('summary')]
+        all_kws = list({k for a in theme_arts for k in a.get('keywords', [])})[:8]
+        co_str = ', '.join(companies[:3]) if companies else 'multiple organizations'
+        body = ' '.join(summaries[:3])
+        if len(body) > 600:
+            body = body[:600].rsplit(' ', 1)[0] + '…'
+        intro = (f"Analysis of {len(theme_arts)} recent articles highlights strong momentum "
+                 f"around \"{kw}\". Coverage spans {co_str}. ")
+        insights.append({
+            'theme': kw.title(),
+            'title': f"Intelligence Brief: The State of {kw.title()} in AI",
+            'subtitle': f"Synthesized from {len(theme_arts)} sources · {', '.join(companies[:2]) if companies else 'multiple sources'}",
+            'content': intro + body,
+            'companies': companies,
+            'article_count': len(theme_arts),
+            'sources': [{'title': a['title'], 'link': a['link'], 'website': a['website']}
+                        for a in theme_arts[:4]],
+            'keywords': all_kws,
+        })
+    return jsonify({'insights': insights, 'status': 'ready'})
 
 
 @app.route('/health')
