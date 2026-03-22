@@ -996,7 +996,9 @@ tailwind.config = {
 <aside class="hidden lg:flex flex-col h-screen w-64 fixed left-0 top-0 z-40 bg-surface-container-low py-6 px-4">
   <div class="px-2 mb-8">
     <div class="flex items-center gap-3">
-      <div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
+      <img src="/static/logo.png" alt="3C TRIX AI" class="w-10 h-10 rounded-full object-contain"
+        onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+      <div class="w-10 h-10 rounded-xl bg-primary items-center justify-center hidden">
         <span class="material-symbols-outlined text-white">psychology</span>
       </div>
       <div>
@@ -1027,9 +1029,8 @@ tailwind.config = {
 <header class="fixed top-0 left-0 lg:left-64 right-0 h-16 z-50 bg-surface/90 backdrop-blur-xl border-b border-outline-variant/20">
   <div class="flex items-center justify-between h-full px-6">
     <div class="flex items-center gap-3 lg:hidden">
-      <div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-        <span class="material-symbols-outlined text-white text-sm">psychology</span>
-      </div>
+      <img src="/static/logo.png" alt="3C TRIX AI" class="w-8 h-8 rounded-full object-contain"
+        onerror="this.style.display='none'">
       <span class="font-headline font-black text-primary text-lg">3C TRIX AI</span>
     </div>
     <div class="hidden lg:flex items-center gap-2">
@@ -1370,15 +1371,27 @@ function populateWebsiteFilter() {
 }
 
 // \u2500\u2500 Trending \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+const FEATURED=['google','gemini','chatgpt','openai','anthropic','nvidia','nemoclaw','nemo','copilot','notebooklm','microsoft','cursor','figma','perplexity','qwen','kimi','gpt','claude'];
+function featuredScore(a) {
+  const txt=((a.title||'')+' '+(a.company||'')+' '+(a.keywords||[]).join(' ')).toLowerCase();
+  return FEATURED.reduce((s,t)=>s+(txt.includes(t)?1:0),0);
+}
+
 function renderTrending() {
   if (!allData.length) {
     $('trending-hero').innerHTML='<div class="lg:col-span-3 py-12 text-center text-on-surface-variant">No data yet \u2014 please wait for news to load.</div>';
     $('trending-grid').innerHTML='';
     return;
   }
+  const totalLikes = allData.reduce((s,a)=>s+getLikes(a.link),0);
   const sorted=[...allData].sort((a,b)=>{
     const la=getLikes(a.link), lb=getLikes(b.link);
     if (lb!==la) return lb-la;
+    // No likes yet — fall back to featured company score then date
+    if (totalLikes===0) {
+      const fs=featuredScore(b)-featuredScore(a);
+      if (fs!==0) return fs;
+    }
     return (b.date_iso||'')>(a.date_iso||'')?1:-1;
   });
   const top=sorted.slice(0,10);
