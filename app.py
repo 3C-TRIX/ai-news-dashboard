@@ -1706,6 +1706,9 @@ def get_news():
     return jsonify({'articles': [], 'status': 'loading', 'from_cache': False, 'timestamp': ''})
 
 
+# Start scraping immediately on startup so first visitor doesn't wait
+threading.Thread(target=run_scrape, args=(3,), daemon=True).start()
+
 if __name__ == '__main__':
     today = date.today()
     print("=" * 55)
